@@ -1,0 +1,83 @@
+---
+title: "Human Activity Recognition Data - Weight Lifting Exercises"
+author: "thebloodymummer"
+date: "22 May 2018"
+output: html_document
+---
+##Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+The training data was acquired from: [https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv]
+
+The test data was acquired from: 
+[https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv]
+
+##Data and Method
+For this study, six young and healthy participents were asked to perform a single set of 10 repititions of Unilateral Dumbbell Curl. This is distinguished in the data set by 5 different classes: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). 
+
+Initially, the training data set will be cross validated by subsetting it into a new training set (60%) and a validation set (40%) without replacement. The models will be fitted using the new training data set and initially tested on the validation set. The best model will then be tested on the original test set supplied.
+
+The optimum model will be chosen by applying Decision Tree and Random Forest methods to the training and validation datasets. 
+
+##Relevant packages, seeding and Data Acquisition
+
+The following packages were loaded. The machine learning will be covered by caret, Decision trees and Random forests by rpart, randomForest and rattle while plots will be covered by ggplot. TAlso, to ensure reproducibility, an initial seed of 33 was chosen.
+
+```{r. echo = TRUE}
+library(caret)
+library(rpart)
+library(randomForest)
+library(rattle)
+library(ggplot2)
+set.seed(333)
+```
+
+Using the links provided, the relavant data sets were downloaded into a "rawData" folder and read as csv files into RStudio. 
+
+```{r, echo = TRUE}
+if(!file.exists("rawData")){dir.create("rawData")}
+train <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+test <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+traindest <- "./rawData/train.csv"
+testdest <- "./rawData/test.csv"
+download.file(train, destfile = traindest)
+download.file(test, destfile = testdest)
+trainData <- read.csv("./rawData/train.csv")
+testData <- read.csv("./rawData/test.csv")
+```
+
+##Preproccessing
+As mentioned earlier, the supplied training data is partitioned into a new training set called trainData2 (60%) and validation set called validation (40%). 
+
+```{r, echo = TRUE}
+inTrain <- createDataPartition(y=trainData$classe, p=0.6, list=FALSE)
+trainData2 <- trainData[inTrain, ] 
+validation <- trainData[-inTrain, ]
+dim(trainData2); dim(validation)
+```
+
+ggplot(trainData2, 
+       aes(x = classe)) + geom_bar() + labs(main = "Plot of levels of variable classes",
+                                            x = "Classe", 
+                                            y = "Frequency")
+##Classification Tree
+classModel <- rpart(classe ~ ., data=trainData2, method="class")
+
+classPredication <- predict(classModel, validation, type = "class")
+
+fancyRpartPlot(classModel$finalModel)
+
+confusionMatrix(classPredication, validation$classe)
+
+##Random Forest
+forestModel <- randomForest(classe ~. , data=trainData2, method="class")
+
+# Predicting:
+forestPrediction <- predict(ForestModel, validation, type = "class")
+
+# Test results on TestTrainingSet data set:
+confusionMatrix(forestPrediction, validation$classe)
+
+#Final Prediction
+predict(forestModel, testData, type="class")

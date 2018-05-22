@@ -57,27 +57,46 @@ validation <- trainData[-inTrain, ]
 dim(trainData2); dim(validation)
 ```
 
+To see an even spread of oberservations across the classe varible, a histogram was plotted demonstrating the frequency of each class.
+
+```{r. echo = TRUE}
 ggplot(trainData2, 
        aes(x = classe)) + geom_bar() + labs(main = "Plot of levels of variable classes",
                                             x = "Classe", 
                                             y = "Frequency")
+```
+
 ##Classification Tree
+A model is established and the resulting classification tree and confusion matrix is printed.
+
+```{r, echo = TRUE}
 classModel <- rpart(classe ~ ., data=trainData2, method="class")
 
 classPredication <- predict(classModel, validation, type = "class")
 
 fancyRpartPlot(classModel$finalModel)
+```
 
+```{r, echo = TRUE}
 confusionMatrix(classPredication, validation$classe)
+```
 
 ##Random Forest
+Similarly, a model is generated using a random forest and the confusion matrix is printed.
+
+```{r, echo = TRUE}
 forestModel <- randomForest(classe ~. , data=trainData2, method="class")
-
-# Predicting:
 forestPrediction <- predict(ForestModel, validation, type = "class")
-
-# Test results on TestTrainingSet data set:
 confusionMatrix(forestPrediction, validation$classe)
+```
 
-#Final Prediction
+##Comparison between the two models
+
+
+
+
+
+#Application to initial test set
+```{r, echo = TRUE}
 predict(forestModel, testData, type="class")
+```

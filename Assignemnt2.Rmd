@@ -1,9 +1,10 @@
 ---
 title: "Human Activity Recognition Data - Weight Lifting Exercises"
 author: "thebloodymummer"
-date: "22 May 2018"
+date: "28 May 2018"
 output: html_document
 ---
+
 ##Background
 
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
@@ -24,7 +25,7 @@ The optimum model will be chosen by applying Decision Tree and Random Forest met
 
 The following packages were loaded. The machine learning will be covered by caret, Decision trees and Random forests by rpart, randomForest and rattle while plots will be covered by ggplot. TAlso, to ensure reproducibility, an initial seed of 33 was chosen.
 
-```{r, echo = TRUE}
+```{r, message=F, warning=F, echo = TRUE}
 library(caret)
 library(rpart)
 library(randomForest)
@@ -45,6 +46,18 @@ download.file(train, destfile = traindest)
 download.file(test, destfile = testdest)
 trainData <- read.csv("./rawData/train.csv", na.strings=c("NA","#DIV/0!", ""))
 testData <- read.csv("./rawData/test.csv", na.strings=c("NA","#DIV/0!", ""))
+```
+
+The data was then tidied to remove unnecessary columns, missing values and near zero values.
+
+```{r, echo = TRUE}
+trainData <- trainData[,8:length(colnames(trainData))]
+testData <- testData[,8:length(colnames(testData))]
+trainData <- trainData[, colSums(is.na(trainData)) == 0] 
+testData <- testData[, colSums(is.na(testData)) == 0]
+nzv <- nearZeroVar(trainData,saveMetrics=TRUE)
+zero.var.ind <- sum(nzv$nzv)
+if ((zero.var.ind>0)) { trainData <- trainData[,nzv$nzv==FALSE]}
 ```
 
 ##Preproccessing
@@ -84,17 +97,20 @@ Similarly, a model is generated using a random forest and the confusion matrix i
 
 ```{r, echo = TRUE}
 forestModel <- randomForest(classe ~. , data=trainData2, method="class")
-forestPrediction <- predict(ForestModel, validation, type = "class")
+forestPrediction <- predict(forestModel, validation, type = "class")
 confusionMatrix(forestPrediction, validation$classe)
 ```
 
 ##Comparison between the two models
 
+Fomr the data shown above, it seems the Random Forest performed better than the Decision Tree. The accuracy for the Decision Tree was 0.739 while the Robdom Forest was 0.993. Simarly, the Kappa statistic for the Decision Tree demonstrated a value of 0.668 and a value of 0.992 for the Random Forest. As a result the Random Forest model is chosen due to its out-of-sample error of 0.7%. Therefore very few of the test sample values will be misclassified.
 
-
-
-
-#Application to initial test set
+##Prediction on Test Set
 ```{r, echo = TRUE}
 predict(forestModel, testData, type="class")
 ```
+
+##References
+
+Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6. 
+
